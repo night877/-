@@ -1,0 +1,1198 @@
+﻿HTML
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>Конструктор тарелки | PRO</title>
+ 
+ <!-- Telegram Web App SDK -->
+ <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+ <style>
+   :root {
+     --bg-cream: #F7F5F0;
+     --bg-card: #FFFFFF;
+     --card-border: #ECE4D8;
+     --text-dark: #1E1B18;
+     --text-muted: #82786D;
+     
+     --accent-green: #356E3B;
+     --accent-green-soft: #E9F4E8;
+     --accent-protein: #C3472C;
+     --accent-protein-soft: #FDECE8;
+     --accent-carb: #BA8316;
+     --accent-carb-soft: #FCF5E0;
+     --accent-fat: #776346;
+     --accent-fat-soft: #F3EDE3;
+     
+     --shadow-card: 0 6px 20px rgba(50, 40, 30, 0.06);
+     --shadow-plate: 0 16px 36px rgba(45, 32, 20, 0.14), inset 0 2px 5px rgba(255,255,255,1);
+   }
+
+   * {
+     box-sizing: border-box;
+     margin: 0;
+     padding: 0;
+     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+     -webkit-tap-highlight-color: transparent;
+     user-select: none;
+   }
+
+   body {
+     background-color: var(--bg-cream);
+     background-image: 
+       radial-gradient(at 0% 0%, rgba(215, 235, 212, 0.5) 0px, transparent 50%),
+       radial-gradient(at 100% 100%, rgba(252, 226, 218, 0.5) 0px, transparent 50%);
+     color: var(--text-dark);
+     min-height: 100vh;
+     padding: 14px 14px 44px 14px;
+   }
+
+   .app-container {
+     max-width: 440px;
+     margin: 0 auto;
+     display: flex;
+     flex-direction: column;
+     gap: 13px;
+   }
+
+   /* Шапка */
+   .header {
+     text-align: center;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 4px;
+   }
+   .brand-badge {
+     background: #FFFFFF;
+     color: var(--accent-green);
+     font-size: 10px;
+     font-weight: 800;
+     padding: 4px 13px;
+     border-radius: 20px;
+     text-transform: uppercase;
+     letter-spacing: 0.6px;
+     border: 1px solid #D6E8D2;
+     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+   }
+   h1 {
+     font-size: 22px;
+     font-weight: 800;
+     color: var(--text-dark);
+     letter-spacing: -0.4px;
+   }
+   .subtitle {
+     font-size: 12px;
+     color: var(--text-muted);
+   }
+
+   /* PRO Dashboard с кольцом калорий Lifesum */
+   .dashboard-card {
+     background: linear-gradient(145deg, #221F1C 0%, #35302A 100%);
+     color: #FFFFFF;
+     border-radius: 24px;
+     padding: 16px;
+     box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+     display: flex;
+     align-items: center;
+     gap: 16px;
+   }
+   .calorie-ring-wrap {
+     position: relative;
+     width: 90px;
+     height: 90px;
+     flex-shrink: 0;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+   }
+   .calorie-ring-wrap svg {
+     width: 100%;
+     height: 100%;
+     transform: rotate(-90deg);
+   }
+   .ring-bg {
+     fill: none;
+     stroke: rgba(255, 255, 255, 0.1);
+     stroke-width: 7;
+   }
+   .ring-bar {
+     fill: none;
+     stroke: #66BB6A;
+     stroke-width: 7;
+     stroke-linecap: round;
+     stroke-dasharray: 251;
+     stroke-dashoffset: 251;
+     transition: stroke-dashoffset 0.4s ease;
+   }
+   .ring-text {
+     position: absolute;
+     text-align: center;
+   }
+   .ring-kcal {
+     font-size: 17px;
+     font-weight: 800;
+     color: #FFFFFF;
+     line-height: 1;
+   }
+   .ring-sub {
+     font-size: 9px;
+     color: #B2A999;
+     text-transform: uppercase;
+     margin-top: 2px;
+     font-weight: 700;
+   }
+
+   .macros-col {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     gap: 7px;
+   }
+   .macro-row-item {
+     display: flex;
+     flex-direction: column;
+     gap: 2px;
+   }
+   .macro-row-head {
+     display: flex;
+     justify-content: space-between;
+     font-size: 10.5px;
+     font-weight: 700;
+     color: #DDD6C8;
+   }
+   .macro-bar-track {
+     height: 5px;
+     border-radius: 4px;
+     background: rgba(255,255,255,0.1);
+     overflow: hidden;
+   }
+   .macro-bar-fill {
+     height: 100%;
+     border-radius: 4px;
+     width: 0%;
+     transition: width 0.3s ease;
+   }
+   .fill-prot { background: #FF7043; }
+   .fill-fat { background: #FFCA28; }
+   .fill-carb { background: #42A5F5; }
+
+   /* Керамическая тарелка */
+   .plate-card {
+     background: #FFFFFF;
+     border: 1px solid var(--card-border);
+     border-radius: 24px;
+     padding: 16px 14px 14px 14px;
+     box-shadow: var(--shadow-card);
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+   }
+   .porcelain-plate {
+     position: relative;
+     width: 184px;
+     height: 184px;
+     border-radius: 50%;
+     background: radial-gradient(circle at 35% 35%, #FFFFFF 0%, #FAF6EE 70%, #E5DAC9 100%);
+     box-shadow: var(--shadow-plate);
+     padding: 11px;
+     border: 2px solid #EEE5D7;
+   }
+   .plate-dish-inner {
+     width: 100%;
+     height: 100%;
+     border-radius: 50%;
+     position: relative;
+     overflow: hidden;
+     box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);
+     background: #FCFBF8;
+   }
+
+   .sector-veg {
+     position: absolute;
+     left: 0; top: 0; bottom: 0; width: 50%;
+     background: #EEF7EC;
+     border-right: 1.5px dashed #BEDCB5;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     padding: 6px;
+     transition: all 0.25s ease;
+   }
+   .sector-protein {
+     position: absolute;
+     right: 0; top: 0; height: 50%; width: 50%;
+     background: #FEF2EE;
+     border-bottom: 1.5px dashed #F5C6BA;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     padding: 4px;
+     transition: all 0.25s ease;
+   }
+   .sector-carbs {
+     position: absolute;
+     right: 0; bottom: 0; height: 50%; width: 50%;
+     background: #FCF7E6;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     padding: 4px;
+     transition: all 0.25s ease;
+   }
+   .sector-fats-center {
+     position: absolute;
+     top: 50%; left: 50%;
+     transform: translate(-50%, -50%);
+     width: 34px; height: 34px;
+     border-radius: 50%;
+     background: #F4EBE0;
+     border: 1.5px solid #DECAB1;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 14px;
+     box-shadow: 0 3px 8px rgba(0,0,0,0.09);
+     z-index: 5;
+     transition: all 0.25s ease;
+   }
+
+   .sec-active.sector-veg { background: #CCE6C4; }
+   .sec-active.sector-protein { background: #FAC7BA; }
+   .sec-active.sector-carbs { background: #FBE6A9; }
+   .sec-active.sector-fats-center { background: #E9CFAB; border-color: #B89662; }
+
+   .sec-label {
+     font-size: 9.5px;
+     font-weight: 800;
+     text-transform: uppercase;
+     letter-spacing: 0.3px;
+   }
+   .lbl-veg { color: var(--accent-green); }
+   .lbl-prot { color: var(--accent-protein); }
+   .lbl-carb { color: var(--accent-carb); }
+
+   .sec-thumbs-preview {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: center;
+     gap: 3px;
+     margin-top: 3px;
+     max-width: 90%;
+   }
+   .sec-mini-img {
+     width: 18px;
+     height: 18px;
+     border-radius: 50%;
+     object-fit: cover;
+     border: 1px solid #FFF;
+     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+   }
+
+   /* Выбранные теги */
+   .plate-tags-row {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: center;
+     gap: 6px;
+     margin-top: 10px;
+     width: 100%;
+     min-height: 26px;
+   }
+   .selected-tag {
+     display: inline-flex;
+     align-items: center;
+     gap: 5px;
+     background: #FAF7F2;
+     border: 1px solid #DFD5C5;
+     font-size: 11px;
+     font-weight: 700;
+     padding: 4px 10px;
+     border-radius: 14px;
+     color: var(--text-dark);
+     cursor: pointer;
+     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+     animation: popIn 0.18s ease-out;
+   }
+   @keyframes popIn {
+     0% { transform: scale(0.85); opacity: 0; }
+     100% { transform: scale(1); opacity: 1; }
+   }
+   .tag-img-thumb {
+     width: 16px;
+     height: 16px;
+     border-radius: 50%;
+     object-fit: cover;
+   }
+   .tag-w-txt { font-size: 9.5px; color: #82786D; font-weight: 600; }
+   .tag-x-btn { color: #A0988D; font-weight: bold; font-size: 12px; margin-left: 2px; }
+
+   /* Экспертная плашка Жанны */
+   .expert-box {
+     background: #FFFFFF;
+     border: 1px solid var(--card-border);
+     border-left: 5px solid var(--accent-green);
+     border-radius: 20px;
+     padding: 12px 14px;
+     box-shadow: var(--shadow-card);
+     display: flex;
+     gap: 12px;
+     align-items: flex-start;
+     transition: all 0.25s ease;
+   }
+   .expert-icon-avatar {
+     width: 36px;
+     height: 36px;
+     background: #EDF7EC;
+     border: 1.5px solid #CFE6CA;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 18px;
+     flex-shrink: 0;
+   }
+   .expert-title { font-size: 9.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+   .expert-text { font-size: 11.5px; color: #352F29; margin-top: 2px; line-height: 1.35; }
+
+   /* Строка Поиска и Сканера */
+   .controls-row {
+     display: flex;
+     gap: 8px;
+     align-items: center;
+   }
+   .search-input-wrap {
+     position: relative;
+     flex: 1;
+   }
+   .search-input {
+     width: 100%;
+     padding: 12px 36px 12px 14px;
+     border-radius: 16px;
+     border: 1px solid #DCD2C2;
+     background: #FFFFFF;
+     font-size: 12.5px;
+     outline: none;
+     color: #26221E;
+     box-shadow: var(--shadow-card);
+   }
+   .search-clear-btn {
+     position: absolute;
+     right: 12px;
+     top: 50%;
+     transform: translateY(-50%);
+     font-size: 14px;
+     color: #999;
+     background: none;
+     border: none;
+     cursor: pointer;
+     display: none;
+     padding: 4px;
+   }
+   .btn-scan-trigger {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 6px;
+     padding: 12px 15px;
+     background: linear-gradient(135deg, #24201D 0%, #3D352E 100%);
+     color: #FFFFFF;
+     border: none;
+     border-radius: 16px;
+     font-size: 11.5px;
+     font-weight: 800;
+     cursor: pointer;
+     box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+     white-space: nowrap;
+   }
+   .btn-scan-trigger:active { transform: scale(0.96); }
+
+   /* Табы полок */
+   .shelves-bar {
+     display: flex;
+     gap: 6px;
+     overflow-x: auto;
+     scrollbar-width: none;
+     padding-bottom: 2px;
+   }
+   .shelves-bar::-webkit-scrollbar { display: none; }
+   
+   .tab-btn {
+     flex: 0 0 auto;
+     padding: 9px 13px;
+     border-radius: 14px;
+     border: 1px solid #DFD5C5;
+     background: #FFFFFF;
+     color: #555;
+     font-size: 11px;
+     font-weight: 700;
+     cursor: pointer;
+     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+     transition: all 0.15s ease;
+   }
+   .tab-btn:active { transform: scale(0.96); }
+   .tab-btn.active { color: #FFFFFF; border-color: transparent; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+   .tab-btn.tab-veg.active { background: var(--accent-green); }
+   .tab-btn.tab-protein.active { background: var(--accent-protein); }
+   .tab-btn.tab-carbs.active { background: var(--accent-carb); }
+   .tab-btn.tab-fats.active { background: var(--accent-fat); }
+   .tab-btn.tab-custom.active { background: #443B33; }
+
+   /* Витрина продуктов с РЕАЛЬНЫМИ ФОТО */
+   .pantry-card {
+     background: #FFFFFF;
+     border: 1px solid var(--card-border);
+     border-radius: 22px;
+     padding: 10px;
+     box-shadow: var(--shadow-card);
+   }
+   .food-catalog-grid {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 8px;
+     max-height: 250px;
+     overflow-y: auto;
+     padding-right: 2px;
+   }
+   .food-catalog-grid::-webkit-scrollbar { width: 4px; }
+   .food-catalog-grid::-webkit-scrollbar-thumb { background: #D6CCBD; border-radius: 4px; }
+
+   .food-card-photo {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 8px;
+     border-radius: 15px;
+     border: 1px solid #ECE5D8;
+     background: #FAF8F5;
+     cursor: pointer;
+     transition: all 0.12s ease;
+     min-width: 0;
+   }
+   .food-card-photo:active { transform: scale(0.96); }
+   
+   .food-card-body {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     min-width: 0;
+     flex: 1;
+   }
+   .food-photo-img {
+     width: 32px;
+     height: 32px;
+     border-radius: 10px;
+     object-fit: cover;
+     flex-shrink: 0;
+     background: #EEE9DF;
+   }
+   .food-texts {
+     min-width: 0;
+     flex: 1;
+   }
+   .food-title {
+     font-size: 11px;
+     font-weight: 700;
+     line-height: 1.25;
+     color: #221F1C;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+   }
+   .food-meta {
+     font-size: 9px;
+     color: #8C8275;
+     margin-top: 1px;
+   }
+   .food-badge-gram {
+     font-size: 9.5px;
+     font-weight: 800;
+     padding: 3px 6px;
+     border-radius: 8px;
+     flex-shrink: 0;
+     margin-left: 4px;
+   }
+
+   .food-card-photo.active.veg { background: var(--accent-green-soft); border-color: #BEDCB5; }
+   .food-card-photo.active.veg .food-badge-gram { background: var(--accent-green); color: #FFF; }
+   
+   .food-card-photo.active.protein { background: var(--accent-protein-soft); border-color: #F5C6BA; }
+   .food-card-photo.active.protein .food-badge-gram { background: var(--accent-protein); color: #FFF; }
+   
+   .food-card-photo.active.carbs { background: var(--accent-carb-soft); border-color: #FBE6A9; }
+   .food-card-photo.active.carbs .food-badge-gram { background: var(--accent-carb); color: #FFF; }
+   
+   .food-card-photo.active.fats { background: var(--accent-fat-soft); border-color: #E2D5C3; }
+   .food-card-photo.active.fats .food-badge-gram { background: var(--accent-fat); color: #FFF; }
+   
+   .food-card-photo.active.custom { background: #EDEAE4; border-color: #CDC3B4; }
+   .food-card-photo.active.custom .food-badge-gram { background: #443B33; color: #FFF; }
+
+   /* Нижние кнопки */
+   .actions-group {
+     display: flex;
+     gap: 8px;
+     margin-top: 2px;
+   }
+   .btn-reset {
+     flex: 1;
+     padding: 13px;
+     border-radius: 16px;
+     border: none;
+     background: #E5DFD4;
+     color: #443E36;
+     font-weight: 700;
+     font-size: 12px;
+     cursor: pointer;
+   }
+   .btn-save-plate {
+     flex: 2;
+     padding: 13px;
+     border-radius: 16px;
+     border: none;
+     background: var(--accent-green);
+     color: #FFFFFF;
+     font-weight: 800;
+     font-size: 12.5px;
+     cursor: pointer;
+     box-shadow: 0 4px 16px rgba(53, 110, 59, 0.35);
+   }
+
+   /* Модалка порции */
+   .modal-overlay {
+     position: fixed;
+     top: 0; left: 0; right: 0; bottom: 0;
+     background: rgba(0,0,0,0.6);
+     backdrop-filter: blur(6px);
+     display: none;
+     justify-content: center;
+     align-items: center;
+     z-index: 100;
+     padding: 16px;
+   }
+   .modal-sheet {
+     background: #FFFFFF;
+     width: 100%;
+     max-width: 320px;
+     border-radius: 24px;
+     padding: 20px;
+     box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+     animation: popIn 0.2s ease-out;
+   }
+   .modal-food-head {
+     font-size: 15px;
+     font-weight: 800;
+     margin-bottom: 14px;
+     color: #221F1C;
+     display: flex;
+     align-items: center;
+     gap: 9px;
+   }
+   .modal-head-img {
+     width: 28px;
+     height: 28px;
+     border-radius: 8px;
+     object-fit: cover;
+   }
+   .portion-quick-grid {
+     display: grid;
+     grid-template-columns: repeat(4, 1fr);
+     gap: 6px;
+     margin-bottom: 12px;
+   }
+   .quick-w-btn {
+     background: #F4EFE6;
+     border: 1px solid #E4D8C5;
+     padding: 9px 0;
+     border-radius: 12px;
+     font-size: 11.5px;
+     font-weight: 700;
+     cursor: pointer;
+     color: #4A4238;
+   }
+   .quick-w-btn.active {
+     background: var(--accent-green);
+     color: #FFF;
+     border-color: transparent;
+   }
+   .manual-weight-inp {
+     width: 100%;
+     padding: 12px;
+     border: 1.5px solid #D8CFBD;
+     border-radius: 14px;
+     font-size: 16px;
+     font-weight: 800;
+     text-align: center;
+     outline: none;
+     margin-bottom: 14px;
+   }
+   .manual-weight-inp:focus { border-color: var(--accent-green); }
+   .modal-actions {
+     display: flex;
+     gap: 8px;
+   }
+   .m-btn {
+     flex: 1;
+     padding: 12px;
+     border-radius: 14px;
+     border: none;
+     font-weight: 700;
+     font-size: 12px;
+     cursor: pointer;
+   }
+   .m-btn-cancel { background: #E7E1D6; color: #555; }
+   .m-btn-del { background: #FDE8E8; color: #C53030; }
+   .m-btn-confirm { background: var(--accent-green); color: #FFF; flex: 1.5; font-weight: 800; }
+ </style>
+</head>
+<body>
+
+ <div class="app-container">
+   
+   <!-- Шапка -->
+   <header class="header">
+     <span class="brand-badge">🌿 Жанна Метод • PRO</span>
+     <h1>Конструктор тарелки</h1>
+     <p class="subtitle">Рацион из продуктов супермаркетов с точным КБЖУ</p>
+   </header>
+
+   <!-- PRO Dashboard с Кольцом активности Lifesum -->
+   <div class="dashboard-card">
+     <div class="calorie-ring-wrap">
+       <svg viewBox="0 0 100 100">
+         <circle class="ring-bg" cx="50" cy="50" r="40"/>
+         <circle id="ring-progress" class="ring-bar" cx="50" cy="50" r="40"/>
+       </svg>
+       <div class="ring-text">
+         <div id="stat-kcal" class="ring-kcal">0</div>
+         <div class="ring-sub">Ккал</div>
+       </div>
+     </div>
+
+     <div class="macros-col">
+       <div class="macro-row-item">
+         <div class="macro-row-head">
+           <span>Белки</span>
+           <span id="stat-p">0 г</span>
+         </div>
+         <div class="macro-bar-track">
+           <div id="bar-p" class="macro-bar-fill fill-prot"></div>
+         </div>
+       </div>
+
+       <div class="macro-row-item">
+         <div class="macro-row-head">
+           <span>Жиры</span>
+           <span id="stat-f">0 г</span>
+         </div>
+         <div class="macro-bar-track">
+           <div id="bar-f" class="macro-bar-fill fill-fat"></div>
+         </div>
+       </div>
+
+       <div class="macro-row-item">
+         <div class="macro-row-head">
+           <span>Углеводы</span>
+           <span id="stat-c">0 г</span>
+         </div>
+         <div class="macro-bar-track">
+           <div id="bar-c" class="macro-bar-fill fill-carb"></div>
+         </div>
+       </div>
+     </div>
+   </div>
+
+   <!-- Керамическая фарфоровая тарелка -->
+   <div class="plate-card">
+     <div class="porcelain-plate">
+       <div class="plate-dish-inner">
+         <div id="sec-veg" class="sector-veg">
+           <span class="sec-label lbl-veg">1/2 Овощи</span>
+           <div id="prev-veg" class="sec-thumbs-preview"></div>
+         </div>
+         
+         <div id="sec-protein" class="sector-protein">
+           <span class="sec-label lbl-prot">1/4 Белок</span>
+           <div id="prev-protein" class="sec-thumbs-preview"></div>
+         </div>
+         
+         <div id="sec-carbs" class="sector-carbs">
+           <span class="sec-label lbl-carb">1/4 Углевод</span>
+           <div id="prev-carbs" class="sec-thumbs-preview"></div>
+         </div>
+         
+         <div id="sec-fats" class="sector-fats-center">🥑</div>
+       </div>
+     </div>
+
+     <div id="plate-tags" class="plate-tags-row">
+       <span style="font-size: 11px; color: #9A9286; font-style: italic;">Нажми на продукты или отсканируй штрихкод</span>
+     </div>
+   </div>
+
+   <!-- Экспертная плашка Жанны -->
+   <div id="expert-box" class="expert-box">
+     <div class="expert-icon-avatar">👩‍⚕️</div>
+     <div>
+       <div class="expert-title">Оценка рациона Жанной</div>
+       <div id="expert-text" class="expert-text">
+         Собери базовый баланс: <strong>1/2 овощей</strong> для объёма и ЖКТ, <strong>1/4 белка</strong> для сытости на 4 часа и <strong>1/4 углеводов</strong> для чистой энергии.
+       </div>
+     </div>
+   </div>
+
+   <!-- Поиск + Сканер штрихкодов -->
+   <div class="controls-row">
+     <div class="search-input-wrap">
+       <input type="text" id="search-bar" class="search-input" oninput="runSearch(this.value)" placeholder="🔍 Поиск продуктов...">
+       <button id="search-clear-btn" class="search-clear-btn" onclick="clearSearch()">✕</button>
+     </div>
+     
+     <button class="btn-scan-trigger" onclick="startBarcodeScan()">
+       <span>📷</span> Сканер
+     </button>
+   </div>
+
+   <!-- Полки категорий -->
+   <div class="shelves-bar">
+     <button onclick="switchTab('veg')" id="tab-veg" class="tab-btn tab-veg active">🥦 Овощи (<span id="c-veg">0</span>)</button>
+     <button onclick="switchTab('protein')" id="tab-protein" class="tab-btn tab-protein">🍗 Белок (<span id="c-protein">0</span>)</button>
+     <button onclick="switchTab('carbs')" id="tab-carbs" class="tab-btn tab-carbs">🍚 Углеводы (<span id="c-carbs">0</span>)</button>
+     <button onclick="switchTab('fats')" id="tab-fats" class="tab-btn tab-fats">🥑 Жиры (<span id="c-fats">0</span>)</button>
+     <button onclick="switchTab('custom')" id="tab-custom" class="tab-btn tab-custom">📦 Сканер / Мои (<span id="c-custom">0</span>)</button>
+   </div>
+
+   <!-- Витрина с ФОТОГРАФИЯМИ ПРОДУКТОВ -->
+   <div class="pantry-card">
+     <div id="food-catalog-grid" class="food-catalog-grid"></div>
+   </div>
+
+   <!-- Нижние кнопки -->
+   <div class="actions-group">
+     <button onclick="clearPlate()" class="btn-reset">Сбросить</button>
+     <button onclick="saveMeal()" class="btn-save-plate">✓ Сохранить тарелку</button>
+   </div>
+ </div>
+
+ <!-- Модалка порции -->
+ <div id="modal-screen" class="modal-overlay">
+   <div class="modal-sheet">
+     <div id="modal-head" class="modal-food-head">
+       <img id="m-food-img" class="modal-head-img" src="" alt="">
+       <span id="m-food-title">Вес порции</span>
+     </div>
+     
+     <div class="portion-quick-grid">
+       <button class="quick-w-btn" onclick="setPreset(50)">50г</button>
+       <button class="quick-w-btn" onclick="setPreset(100)">100г</button>
+       <button class="quick-w-btn" onclick="setPreset(150)">150г</button>
+       <button class="quick-w-btn" onclick="setPreset(200)">200г</button>
+     </div>
+
+     <input type="number" id="m-weight-input" class="manual-weight-inp" placeholder="Вес в граммах" value="100">
+
+     <div class="modal-actions">
+       <button id="m-btn-del" class="m-btn m-btn-del" onclick="deleteFromModal()" style="display:none;">Удалить</button>
+       <button class="m-btn m-btn-cancel" onclick="closeModal()">Отмена</button>
+       <button class="m-btn m-btn-confirm" onclick="confirmModal()">Готово</button>
+     </div>
+   </div>
+ </div>
+
+ <script>
+   const tg = window.Telegram?.WebApp;
+   if (tg) { tg.ready(); tg.expand(); }
+
+   const foodDB = {
+     veg: [
+       { id: 'v1', name: 'Огурцы грунтовые', img: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=100&q=80', cat: 'veg', kcal: 15, p: 0.8, f: 0.1, c: 2.8 },
+       { id: 'v2', name: 'Помидоры Черри', img: 'https://images.unsplash.com/photo-1546470427-e26264be0b11?w=100&q=80', cat: 'veg', kcal: 18, p: 0.9, f: 0.2, c: 3.8 },
+       { id: 'v3', name: 'Капуста белокочанная', img: 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=100&q=80', cat: 'veg', kcal: 27, p: 1.8, f: 0.1, c: 4.7 },
+       { id: 'v4', name: 'Капуста квашеная', img: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=100&q=80', cat: 'veg', kcal: 19, p: 1.6, f: 0.1, c: 3.2 },
+       { id: 'v5', name: 'Пекинская капуста', img: 'https://images.unsplash.com/photo-1608797178974-15b35a61edd7?w=100&q=80', cat: 'veg', kcal: 16, p: 1.2, f: 0.2, c: 3.0 },
+       { id: 'v6', name: 'Брокколи на пару', img: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=100&q=80', cat: 'veg', kcal: 28, p: 2.5, f: 0.4, c: 5.0 },
+       { id: 'v7', name: 'Цветная капуста', img: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=100&q=80', cat: 'veg', kcal: 25, p: 2.0, f: 0.3, c: 4.2 },
+       { id: 'v8', name: 'Кабачки / Цукини', img: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=100&q=80', cat: 'veg', kcal: 24, p: 0.6, f: 0.3, c: 4.6 },
+       { id: 'v9', name: 'Баклажаны печеные', img: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=100&q=80', cat: 'veg', kcal: 25, p: 1.2, f: 0.2, c: 4.5 },
+       { id: 'v10', name: 'Перец сладкий', img: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=100&q=80', cat: 'veg', kcal: 27, p: 1.3, f: 0.1, c: 5.3 },
+       { id: 'v11', name: 'Морковь свежая', img: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=100&q=80', cat: 'veg', kcal: 32, p: 1.3, f: 0.1, c: 6.9 },
+       { id: 'v12', name: 'Свекла отварная', img: 'https://images.unsplash.com/photo-1526346698789-224822f00545?w=100&q=80', cat: 'veg', kcal: 49, p: 1.8, f: 0.1, c: 10.8 },
+       { id: 'v13', name: 'Стручковая фасоль', img: 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=100&q=80', cat: 'veg', kcal: 31, p: 2.4, f: 0.2, c: 6.0 },
+       { id: 'v14', name: 'Салат Айсберг', img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80', cat: 'veg', kcal: 14, p: 1.4, f: 0.2, c: 1.8 },
+       { id: 'v15', name: 'Руккола / Шпинат', img: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=100&q=80', cat: 'veg', kcal: 22, p: 2.8, f: 0.5, c: 2.0 },
+       { id: 'v16', name: 'Шампиньоны гриль', img: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=100&q=80', cat: 'veg', kcal: 27, p: 4.3, f: 1.0, c: 0.1 }
+     ],
+     protein: [
+       { id: 'p1', name: 'Куриная грудка', img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=100&q=80', cat: 'protein', kcal: 113, p: 23.6, f: 1.9, c: 0.4 },
+       { id: 'p2', name: 'Куриное бедро (б/к)', img: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=100&q=80', cat: 'protein', kcal: 165, p: 19.5, f: 9.5, c: 0.0 },
+       { id: 'p3', name: 'Филе индейки', img: 'https://images.unsplash.com/photo-1514944298352-f47055a4e326?w=100&q=80', cat: 'protein', kcal: 115, p: 24.0, f: 1.5, c: 0.0 },
+       { id: 'p4', name: 'Яйца отварные (2 шт)', img: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=100&q=80', cat: 'protein', kcal: 157, p: 12.7, f: 11.5, c: 0.7 },
+       { id: 'p5', name: 'Омлет пышный', img: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=100&q=80', cat: 'protein', kcal: 140, p: 10.5, f: 9.8, c: 1.8 },
+       { id: 'p6', name: 'Творог 5%', img: 'https://images.unsplash.com/photo-1559561853-08451507cbe7?w=100&q=80', cat: 'protein', kcal: 110, p: 17.0, f: 5.0, c: 1.8 },
+       { id: 'p7', name: 'Греческий йогурт', img: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=100&q=80', cat: 'protein', kcal: 65, p: 7.5, f: 2.0, c: 4.2 },
+       { id: 'p8', name: 'Минтай на пару', img: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=100&q=80', cat: 'protein', kcal: 72, p: 16.0, f: 0.7, c: 0.0 },
+       { id: 'p9', name: 'Стейк семги / лосося', img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=100&q=80', cat: 'protein', kcal: 206, p: 20.0, f: 14.0, c: 0.0 },
+       { id: 'p10', name: 'Тунец в с/соку', img: 'https://images.unsplash.com/photo-1501595091296-3aa970afb3ff?w=100&q=80', cat: 'protein', kcal: 96, p: 22.5, f: 1.0, c: 0.0 },
+       { id: 'p11', name: 'Креветки отварные', img: 'https://images.unsplash.com/photo-1559737558-245ff291fa8c?w=100&q=80', cat: 'protein', kcal: 85, p: 18.2, f: 1.0, c: 0.0 },
+       { id: 'p12', name: 'Говядина постная', img: 'https://images.unsplash.com/photo-1558030006-450675393462?w=100&q=80', cat: 'protein', kcal: 158, p: 25.0, f: 6.0, c: 0.0 },
+       { id: 'p13', name: 'Котлеты паровые', img: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=100&q=80', cat: 'protein', kcal: 130, p: 18.5, f: 5.0, c: 3.0 }
+     ],
+     carbs: [
+       { id: 'c1', name: 'Гречка отварная', img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80', cat: 'carbs', kcal: 103, p: 3.6, f: 1.0, c: 20.5 },
+       { id: 'c2', name: 'Картофель отварной', img: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=100&q=80', cat: 'carbs', kcal: 82, p: 2.0, f: 0.4, c: 16.7 },
+       { id: 'c3', name: 'Картофель печеный', img: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=100&q=80', cat: 'carbs', kcal: 95, p: 2.2, f: 1.5, c: 18.0 },
+       { id: 'c4', name: 'Макароны твердые', img: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=100&q=80', cat: 'carbs', kcal: 112, p: 4.0, f: 0.6, c: 23.2 },
+       { id: 'c5', name: 'Рис Басмати', img: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=100&q=80', cat: 'carbs', kcal: 116, p: 2.6, f: 0.8, c: 24.5 },
+       { id: 'c6', name: 'Овсянка на воде', img: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=100&q=80', cat: 'carbs', kcal: 88, p: 3.0, f: 1.7, c: 15.0 },
+       { id: 'c7', name: 'Булгур отварной', img: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=100&q=80', cat: 'carbs', kcal: 108, p: 3.5, f: 0.7, c: 21.0 },
+       { id: 'c8', name: 'Чечевица отварная', img: 'https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?w=100&q=80', cat: 'carbs', kcal: 115, p: 8.5, f: 0.6, c: 20.0 },
+       { id: 'c9', name: 'Хлеб цельнозерновой', img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&q=80', cat: 'carbs', kcal: 210, p: 7.5, f: 2.0, c: 40.0 },
+       { id: 'c10', name: 'Хлебцы хрустящие', img: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=100&q=80', cat: 'carbs', kcal: 310, p: 10.5, f: 2.5, c: 62.0 }
+     ],
+     fats: [
+       { id: 'f1', name: 'Оливковое масло', img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&q=80', cat: 'fats', kcal: 884, p: 0.0, f: 100.0, c: 0.0 },
+       { id: 'f2', name: 'Сливочное масло 82.5%', img: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=100&q=80', cat: 'fats', kcal: 748, p: 0.5, f: 82.5, c: 0.8 },
+       { id: 'f3', name: 'Сыр Российский 45%', img: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=100&q=80', cat: 'fats', kcal: 356, p: 23.5, f: 29.5, c: 0.0 },
+       { id: 'f4', name: 'Сыр Моцарелла', img: 'https://images.unsplash.com/photo-1559561853-08451507cbe7?w=100&q=80', cat: 'fats', kcal: 240, p: 18.0, f: 18.0, c: 1.5 },
+       { id: 'f5', name: 'Авокадо Хасс', img: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=100&q=80', cat: 'fats', kcal: 160, p: 2.0, f: 14.7, c: 8.5 },
+       { id: 'f6', name: 'Грецкие орехи', img: 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=100&q=80', cat: 'fats', kcal: 654, p: 15.2, f: 65.2, c: 7.0 },
+       { id: 'f7', name: 'Миндаль обжаренный', img: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=100&q=80', cat: 'fats', kcal: 607, p: 18.5, f: 53.0, c: 13.0 },
+       { id: 'f8', name: 'Семена тыквы', img: 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?w=100&q=80', cat: 'fats', kcal: 556, p: 24.5, f: 45.8, c: 14.2 }
+     ],
+     custom: []
+   };
+
+   let cart = new Map();
+   let curTab = 'veg';
+   let filterQuery = '';
+   let selectedFoodId = null;
+
+   function init() {
+     try {
+       const saved = localStorage.getItem('zhanna_custom_foods');
+       if (saved) foodDB.custom = JSON.parse(saved);
+     } catch(e) {}
+
+     updateCounts();
+     renderCatalog();
+   }
+
+   function updateCounts() {
+     document.getElementById('c-veg').innerText = foodDB.veg.length;
+     document.getElementById('c-protein').innerText = foodDB.protein.length;
+     document.getElementById('c-carbs').innerText = foodDB.carbs.length;
+     document.getElementById('c-fats').innerText = foodDB.fats.length;
+     document.getElementById('c-custom').innerText = foodDB.custom.length;
+   }
+
+   function switchTab(t) {
+     curTab = t;
+     filterQuery = '';
+     document.getElementById('search-bar').value = '';
+     document.getElementById('search-clear-btn').style.display = 'none';
+     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+     document.getElementById('tab-' + t).classList.add('active');
+     renderCatalog();
+   }
+
+   function runSearch(txt) {
+     filterQuery = txt.trim().toLowerCase();
+     document.getElementById('search-clear-btn').style.display = filterQuery ? 'block' : 'none';
+     renderCatalog();
+   }
+
+   function clearSearch() {
+     document.getElementById('search-bar').value = '';
+     filterQuery = '';
+     document.getElementById('search-clear-btn').style.display = 'none';
+     renderCatalog();
+   }
+
+   function startBarcodeScan() {
+     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+     if (tg?.showScanQrPopup) {
+       tg.showScanQrPopup({ text: "Наведите камеру на штрихкод товара" }, function(barcode) {
+         tg.closeScanQrPopup();
+         lookupBarcode(barcode);
+         return true;
+       });
+     } else {
+       const code = prompt("Введите штрихкод с упаковки:", "4607004891452");
+       if (code) lookupBarcode(code);
+     }
+   }
+
+   async function lookupBarcode(code) {
+     if (!code) return;
+     const cleanCode = code.trim();
+     
+     const banner = document.getElementById('expert-text');
+     banner.innerHTML = `🔍 <i>Поиск штрихкода ${cleanCode} в базе...</i>`;
+
+     try {
+       const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanCode}.json`);
+       const data = await res.json();
+
+       if (data && data.status === 1 && data.product) {
+         const p = data.product;
+         const name = p.product_name || p.product_name_ru || "Товар " + cleanCode;
+         const nut = p.nutriments || {};
+         const photo = p.image_front_small_url || p.image_small_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&q=80';
+
+         const kcal = Math.round(nut['energy-kcal_100g'] || nut['energy-kcal'] || 0);
+         const prot = parseFloat((nut.proteins_100g || 0).toFixed(1));
+         const fat = parseFloat((nut.fat_100g || 0).toFixed(1));
+         const carb = parseFloat((nut.carbohydrates_100g || 0).toFixed(1));
+
+         let cat = 'protein';
+         if (carb > prot && carb > fat) cat = 'carbs';
+         else if (fat > prot && fat > carb) cat = 'fats';
+         else if (prot >= carb && prot >= fat) cat = 'protein';
+
+         const newFood = {
+           id: 'bc_' + cleanCode,
+           name: name,
+           img: photo,
+           cat: cat,
+           kcal: kcal,
+           p: prot,
+           f: fat,
+           c: carb
+         };
+
+         if (!foodDB.custom.some(x => x.id === newFood.id)) {
+           foodDB.custom.unshift(newFood);
+           localStorage.setItem('zhanna_custom_foods', JSON.stringify(foodDB.custom));
+           updateCounts();
+         }
+
+         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+         openModal(newFood.id);
+         switchTab('custom');
+         banner.innerHTML = `✅ Найден товар: <strong>${name}</strong> (${kcal} ккал / 100г). Выберите граммовку!`;
+       } else {
+         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+         alert("Товар с таким штрихкодом не найден в базе Open Food Facts.");
+         banner.innerHTML = `Штрихкод не распознан. Выберите аналог из каталога.`;
+       }
+     } catch(err) {
+       alert("Ошибка сети при обращении к базе данных.");
+     }
+   }
+
+   function openModal(id) {
+     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+     selectedFoodId = id;
+     const f = findFood(id);
+     if (!f) return;
+
+     document.getElementById('m-food-title').innerText = f.name;
+     document.getElementById('m-food-img').src = f.img;
+     
+     const isAlreadyIn = cart.has(id);
+     document.getElementById('m-weight-input').value = isAlreadyIn ? cart.get(id) : 100;
+     document.getElementById('m-btn-del').style.display = isAlreadyIn ? 'block' : 'none';
+     document.querySelectorAll('.quick-w-btn').forEach(b => b.classList.remove('active'));
+     
+     document.getElementById('modal-screen').style.display = 'flex';
+   }
+
+   function findFood(id) {
+     for (let k in foodDB) {
+       let f = foodDB[k].find(x => x.id === id);
+       if (f) return f;
+     }
+     return null;
+   }
+
+   function setPreset(val) {
+     document.getElementById('m-weight-input').value = val;
+     document.querySelectorAll('.quick-w-btn').forEach(b => b.classList.remove('active'));
+     event.target.classList.add('active');
+   }
+
+   function closeModal() {
+     document.getElementById('modal-screen').style.display = 'none';
+     selectedFoodId = null;
+   }
+
+   function confirmModal() {
+     const w = parseInt(document.getElementById('m-weight-input').value);
+     if (selectedFoodId && w > 0) {
+       cart.set(selectedFoodId, w);
+     }
+     closeModal();
+     renderCatalog();
+     updatePlateUI();
+   }
+
+   function deleteFromModal() {
+     if (selectedFoodId) {
+       cart.delete(selectedFoodId);
+     }
+     closeModal();
+     renderCatalog();
+     updatePlateUI();
+   }
+
+   function removeTag(id) {
+     cart.delete(id);
+     renderCatalog();
+     updatePlateUI();
+   }
+
+   function renderCatalog() {
+     const grid = document.getElementById('food-catalog-grid');
+     let items = [];
+     if (filterQuery) {
+       Object.values(foodDB).forEach(cat => {
+         cat.forEach(p => {
+           if (p.name.toLowerCase().includes(filterQuery)) items.push(p);
+         });
+       });
+     } else {
+       items = foodDB[curTab];
+     }
+
+     if (items.length === 0) {
+       grid.innerHTML = '<div style="grid-column: span 2; text-align:center; padding: 26px; font-size: 11.5px; color: #9A9286;">Ничего не найдено. Нажмите «Сканер» для добавления товара по штрихкоду.</div>';
+       return;
+     }
+
+     grid.innerHTML = items.map(p => {
+       const isSel = cart.has(p.id);
+       const w = isSel ? cart.get(p.id) : null;
+       return `
+         <div onclick="openModal('${p.id}')" class="food-card-photo ${isSel ? 'active ' + p.cat : ''}">
+           <div class="food-card-body">
+             <img src="${p.img}" class="food-photo-img" loading="lazy" alt="">
+             <div class="food-texts">
+               <div class="food-title">${p.name}</div>
+               <div class="food-meta">${p.kcal} ккал / 100г</div>
+             </div>
+           </div>
+           ${isSel ? `<span class="food-badge-gram">${w}г</span>` : ''}
+         </div>
+       `;
+     }).join('');
+   }
+
+   function updatePlateUI() {
+     let chosen = [];
+     let kcal = 0, p = 0, f = 0, c = 0, totalW = 0;
+
+     cart.forEach((weight, id) => {
+       const item = findFood(id);
+       if (item) {
+         chosen.push({ ...item, weight });
+         const ratio = weight / 100;
+         kcal += item.kcal * ratio;
+         p += item.p * ratio;
+         f += item.f * ratio;
+         c += item.c * ratio;
+         totalW += weight;
+       }
+     });
+
+     document.getElementById('stat-kcal').innerText = Math.round(kcal);
+     document.getElementById('stat-p').innerText = p.toFixed(1) + ' г';
+     document.getElementById('stat-f').innerText = f.toFixed(1) + ' г';
+     document.getElementById('stat-c').innerText = c.toFixed(1) + ' г';
+
+     const targetKcal = 600;
+     const progress = Math.min(kcal / targetKcal, 1);
+     const ringOffset = 251 - (251 * progress);
+     document.getElementById('ring-progress').style.strokeDashoffset = ringOffset;
+
+     document.getElementById('bar-p').style.width = Math.min((p / 45) * 100, 100) + '%';
+     document.getElementById('bar-f').style.width = Math.min((f / 30) * 100, 100) + '%';
+     document.getElementById('bar-c').style.width = Math.min((c / 65) * 100, 100) + '%';
+
+     const hasV = chosen.some(x => x.cat === 'veg');
+     const hasP = chosen.some(x => x.cat === 'protein');
+     const hasC = chosen.some(x => x.cat === 'carbs');
+     const hasF = chosen.some(x => x.cat === 'fats');
+
+     const secV = document.getElementById('sec-veg');
+     const secP = document.getElementById('sec-protein');
+     const secC = document.getElementById('sec-carbs');
+     const secF = document.getElementById('sec-fats');
+
+     if (hasV) secV.classList.add('sec-active'); else secV.classList.remove('sec-active');
+     if (hasP) secP.classList.add('sec-active'); else secP.classList.remove('sec-active');
+     if (hasC) secC.classList.add('sec-active'); else secC.classList.remove('sec-active');
+     if (hasF) secF.classList.add('sec-active'); else secF.classList.remove('sec-active');
+
+     document.getElementById('prev-veg').innerHTML = chosen.filter(x => x.cat === 'veg').map(x => `<img class="sec-mini-img" src="${x.img}">`).slice(0, 4).join('');
+     document.getElementById('prev-protein').innerHTML = chosen.filter(x => x.cat === 'protein').map(x => `<img class="sec-mini-img" src="${x.img}">`).slice(0, 2).join('');
+     document.getElementById('prev-carbs').innerHTML = chosen.filter(x => x.cat === 'carbs').map(x => `<img class="sec-mini-img" src="${x.img}">`).slice(0, 2).join('');
+
+     const tagsBox = document.getElementById('plate-tags');
+     if (chosen.length === 0) {
+       tagsBox.innerHTML = '<span style="font-size: 11px; color: #9A9286; font-style: italic;">Нажми на продукты или отсканируй штрихкод</span>';
+     } else {
+       tagsBox.innerHTML = chosen.map(x => `
+         <span class="selected-tag" onclick="openModal('${x.id}')">
+           <img class="tag-img-thumb" src="${x.img}">
+           ${x.name.split('(')[0]} <span class="tag-w-txt">(${x.weight}г)</span>
+           <span class="tag-x-btn" onclick="event.stopPropagation(); removeTag('${x.id}')">×</span>
+         </span>
+       `).join('');
+     }
+
+     const expText = document.getElementById('expert-text');
+     const expBox = document.getElementById('expert-box');
+     const balance = [hasV, hasP, hasC].filter(Boolean).length;
+
+     if (balance === 3) {
+       expBox.style.borderLeftColor = 'var(--accent-green)';
+       expBox.style.background = '#F3FAF1';
+       expText.innerHTML = '<strong>Идеальный баланс нутриентов!</strong> Полноценный белок держит сытость 4+ часа, клетчатка дает комфортный объем для ЖКТ, а углеводы защищают от вечерней тяги к сладкому.';
+     } else if (hasP && !hasV) {
+       expBox.style.borderLeftColor = '#D97706';
+       expBox.style.background = '#FFFBEB';
+       expText.innerHTML = 'Белок на месте, но <strong>добавь 1/2 тарелки свежих или тушеных овощей</strong>! Без клетчатки порция покажется маленькой, и голод настигнет раньше времени.';
+     } else if (hasV && !hasP) {
+       expBox.style.borderLeftColor = '#D97706';
+       expBox.style.background = '#FFFBEB';
+       expText.innerHTML = 'Овощи есть, но <strong>добавь 1/4 тарелки качественного белка</strong> (рыба, птица, яйца, творог), иначе через 1.5 часа потянет на случайные перекусы.';
+     } else {
+       expBox.style.borderLeftColor = '#82786D';
+       expBox.style.background = '#FFFFFF';
+       expText.innerHTML = 'Собери базовый баланс: <strong>1/2 овощей</strong> для объёма и ЖКТ, <strong>1/4 белка</strong> для сытости на 4 часа и <strong>1/4 углеводов</strong> для чистой энергии.';
+     }
+   }
+
+   function clearPlate() {
+     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+     cart.clear();
+     renderCatalog();
+     updatePlateUI();
+   }
+
+   function saveMeal() {
+     if (cart.size === 0) {
+       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+       alert('Сначала добавь продукты на тарелку!');
+       return;
+     }
+     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+     
+     const data = Array.from(cart.entries()).map(e => `${e[0]}:${e[1]}g`).join(',');
+     if (tg?.sendData) {
+       tg.sendData(data);
+     } else {
+       alert('Тарелка сохранена!');
+     }
+   }
+
+   init();
+ </script>
+</body>
+</html>
